@@ -12,7 +12,12 @@ plugins {
 
     // Apply the application plugin to add support for building a CLI application in Java.
     id 'application'
+
+    // docker plugin
+    id 'com.bmuschko.docker-java-application' version '7.3.0'
 }
+
+import static com.bmuschko.gradle.docker.tasks.image.Dockerfile.*
 
 repositories {
 
@@ -71,4 +76,29 @@ application {
 tasks.named('test') {
     // Use JUnit Platform for unit tests.
     useJUnitPlatform()
+}
+
+docker {
+    javaApplication {
+        baseImage = 'openjdk:11-jre-slim'
+        maintainer = 'Tim Dudgeon "tdudgeon@informaticsmatters.com"'
+        ports = []
+        images = ['informaticsmatters/squonk2-smartcyp:latest']
+        mainClassName = 'squonk.jobs.smartcyp.Predictor'
+    }
+}
+
+// This modifies the Dockerfile that is build by the docker-java-application plugin.
+// The ENTRYPOINT is replaced with 'java' and the classpath arguments
+// A CMD added that is '-version'.
+// The expectation is that the CMD will be overridden at runtime.
+dockerCreateDockerfile {
+    List<Instruction> originalInstructions = new ArrayList<Instruction>(instructions.get())
+    int entrypointIndex = originalInstructions
+            .findIndexOf { it.keyword == EntryPointInstruction.KEYWORD}
+    originalInstructions.remove(entrypointIndex)
+    originalInstructions.add(new DefaultCommandInstruction("java -version"))
+    originalInstructions.add(new EnvironmentVariableInstruction("CLASSPATH", "/app/resources:/app/classes:/app/libs/*"))
+
+    instructions.set(originalInstructions)
 }
