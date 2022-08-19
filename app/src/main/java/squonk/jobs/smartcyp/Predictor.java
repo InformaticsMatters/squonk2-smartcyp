@@ -23,6 +23,7 @@ import org.apache.commons.cli.*;
 import org.openscience.cdk.DefaultChemObjectBuilder;
 import org.openscience.cdk.aromaticity.CDKHueckelAromaticityDetector;
 import org.openscience.cdk.exception.CDKException;
+import org.openscience.cdk.geometry.GeometryTools;
 import org.openscience.cdk.graph.ConnectivityChecker;
 import org.openscience.cdk.interfaces.IAtom;
 import org.openscience.cdk.interfaces.IAtomContainer;
@@ -32,6 +33,7 @@ import org.openscience.cdk.io.SDFWriter;
 import org.openscience.cdk.io.iterator.IIteratingChemObjectReader;
 import org.openscience.cdk.io.iterator.IteratingMDLReader;
 import org.openscience.cdk.io.iterator.IteratingSMILESReader;
+import org.openscience.cdk.layout.StructureDiagramGenerator;
 import org.openscience.cdk.smiles.DeduceBondSystemTool;
 import org.openscience.cdk.tools.CDKHydrogenAdder;
 import org.openscience.cdk.tools.manipulator.AtomContainerManipulator;
@@ -68,6 +70,7 @@ public class Predictor {
     private final CDKHydrogenAdder hydrogenAdder = CDKHydrogenAdder.getInstance(DefaultChemObjectBuilder.getInstance());
     private final SMARTSnEnergiesTable _SMARTSnEnergiesTable = new SMARTSnEnergiesTable();
 
+    private final StructureDiagramGenerator diagramGenerator = new StructureDiagramGenerator();
 
     private final boolean calcGeneral;
     private final boolean calc2D6;
@@ -217,7 +220,7 @@ public class Predictor {
                         MoleculeKU molKU = calculateMol(mol);
                         writeProperties(mol, molKU);
                         if (fwriter != null) {
-                            fwriter.write(mol);
+                            writeSDFMol(fwriter, mol);
                         }
                     } catch (CDKException | CloneNotSupportedException e) {
                         LOG.warning(String.format("Failed to process molecule %s, %s", molCount.toString(), e.getLocalizedMessage()));
@@ -240,6 +243,21 @@ public class Predictor {
                 fwriter.close();
             }
         }
+    }
+
+    private void writeSDFMol(SDFWriter writer, IAtomContainer mol) throws CDKException {
+        if (!GeometryTools.has2DCoordinates(mol) && !GeometryTools.has3DCoordinates(mol)) {
+            if (mol instanceof IMolecule) {
+                diagramGenerator.setMolecule((IMolecule)mol);
+                diagramGenerator.generateCoordinates();
+                mol = diagramGenerator.getMolecule();
+            } else {
+                LOG.warning("Molecule not an IMolecule, can't generate coordinates");
+            }
+        }
+        mol.removeProperty("cdk:Title");
+        mol.removeProperty("cdk:Remark");
+        writer.write(mol);
     }
 
     public MoleculeKU calculateMol(IAtomContainer mol)
