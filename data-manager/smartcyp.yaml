@@ -35,6 +35,7 @@ jobs:
       {% if empirical is defined and empirical %}--empirical{% endif %}
       {% if maxRank is defined and maxRank %}--max-rank {{ maxRank }}{% endif %}
       {% if threshold is defined and threshold %}--threshold {{ threshold }}{% endif %}
+      {% if format is defined and format %}--format {{ format }}{% endif %}
       --interval 5000
     variables:
       order:
@@ -95,6 +96,7 @@ jobs:
         type: object
         required:
         - outputFile
+        - format
         properties:
           outputFile:
             title: Output file (.sdf)
@@ -123,6 +125,13 @@ jobs:
           threshold:
             title: Score threshold
             type: number
+          format:
+            title: Score format
+            type: string
+            default: standard
+            enum:
+            - standard
+            - simple
     tests:
       simple-sdf:
         inputs:
@@ -150,6 +159,23 @@ jobs:
           calc2Cp: true
           empirical: true
           maxRank: 3
+        checks:
+          exitCode: 0
+          outputs:
+          - name: foo/cyp-predictions.sdf
+            checks:
+            - exists: true
+      format-simple:
+        inputs:
+          inputFile: data/100.smi
+        options:
+          outputFile: foo/cyp-predictions.sdf
+          calcGeneral: true
+          calc2D6: true
+          calc2Cp: true
+          empirical: true
+          maxRank: 3
+          format: simple
         checks:
           exitCode: 0
           outputs:

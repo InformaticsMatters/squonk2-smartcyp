@@ -81,9 +81,13 @@ public class Predictor {
 
     private Integer interval;
 
+    private String format;
+
+    private long calcCount = 0;
+
 
     public Predictor(boolean calcGeneral, boolean calc2D6, boolean calc2C9, boolean nOxidationCorrection,
-                     Integer maxRank, Float threshold, Integer interval) {
+                     Integer maxRank, Float threshold, Integer interval, String format) {
         this.calcGeneral = calcGeneral;
         this.calc2D6 = calc2D6;
         this.calc2C9 = calc2C9;
@@ -91,6 +95,11 @@ public class Predictor {
         this.maxRank = maxRank;
         this.threshold = threshold;
         this.interval = interval;
+        this.format = format;
+    }
+
+    public long getCalcCount() {
+        return calcCount;
     }
 
     public static void main(String[] args) throws Exception {
@@ -156,6 +165,12 @@ public class Predictor {
                 .desc("Reporting interval")
                 .type(Integer.class)
                 .build());
+        options.addOption(Option.builder("f")
+                .longOpt("format")
+                .hasArg()
+                .argName("standard/simple")
+                .desc("Score format")
+                .build());
 
         if (args.length == 0 | (args.length == 1 && ("-h".equals(args[0]) | "--help".equals(args[0])))) {
             HelpFormatter formatter = new HelpFormatter();
@@ -175,16 +190,22 @@ public class Predictor {
                 methods[1] = true;
                 methods[2] = true;
             } else {
-                methods[0] = cmd.hasOption("calc-general") ? true : false;
-                methods[1] = cmd.hasOption("calc-2d6") ? true : false;
-                methods[2] = cmd.hasOption("calc-2c9") ? true : false;
+                methods[0] = cmd.hasOption("calc-general");
+                methods[1] = cmd.hasOption("calc-2d6");
+                methods[2] = cmd.hasOption("calc-2c9");
             }
             Integer maxRank = cmd.hasOption("max-rank") ? Integer.valueOf(cmd.getOptionValue("max-rank")) : null;
             Float threshold = cmd.hasOption("threshold") ? Float.valueOf(cmd.getOptionValue("threshold")) : null;
             Integer interval = cmd.hasOption("interval") ? Integer.valueOf(cmd.getOptionValue("interval")) : null;
 
+            String format = cmd.hasOption("format") ? cmd.getOptionValue("format") : "standard";
+
+            if (!(format.equals("simple") || format.equals("standard"))) {
+                throw new IllegalArgumentException("Format option must be 'simple' or 'standard");
+            }
+
             Predictor exec = new Predictor(methods[0], methods[1], methods[2], cmd.hasOption("empirical"),
-                    maxRank, threshold, interval);
+                    maxRank, threshold, interval, format);
             exec.run(cmd.getOptionValue("input"), cmd.getOptionValue("output")
             );
         }
@@ -209,7 +230,7 @@ public class Predictor {
             Stream<IAtomContainer> mols = readFile(input);
             final AtomicInteger molCount = new AtomicInteger(0);
             final AtomicInteger errorCount = new AtomicInteger(0);
-            mols = mols.peek((mol) -> {
+            mols = mols.sequential().peek((mol) -> {
                 molCount.incrementAndGet();
                 if (interval != null && molCount.intValue() % interval == 0) {
                     DMLOG.logEvent(DMLogger.Level.INFO, String.format("Processed %s molecules", molCount));
@@ -236,6 +257,7 @@ public class Predictor {
             });
 
             long count = mols.count();
+            calcCount += count;
             DMLOG.logEvent(DMLogger.Level.INFO, String.format("Processed %s mols, %s errors", count, errorCount));
 
         } finally {
@@ -435,14 +457,6 @@ public class Predictor {
                     float f = score.floatValue();
                     scores2D6.addScore(new Score(origAtomIndex, currentAtomType, f, rank));
                 }
-
-//                this.outfile.print("," + this.twoDecimalFormat.format(MoleculeKU.SMARTCYP_PROPERTY.Span2End.getServiceDescriptors(currentAtom)));
-//                if (MoleculeKU.SMARTCYP_PROPERTY.Dist2ProtAmine.getServiceDescriptors(currentAtom) != null) {
-//                    this.outfile.print("," + this.twoDecimalFormat.format(MoleculeKU.SMARTCYP_PROPERTY.Dist2ProtAmine.getServiceDescriptors(currentAtom)));
-//                } else {
-//                    this.outfile.print(",0");
-//                }
-
                 if (calc2C9) {
                     Number score = MoleculeKU.SMARTCYP_PROPERTY.Score2C9.get(currentAtom);
                     int rank = MoleculeKU.SMARTCYP_PROPERTY.Ranking2C9.get(currentAtom).intValue();
@@ -450,36 +464,28 @@ public class Predictor {
                     float f = score.floatValue();
                     scores2C9.addScore(new Score(origAtomIndex, currentAtomType, f, rank));
                 }
-
-//                if (MoleculeKU.SMARTCYP_PROPERTY.Dist2CarboxylicAcid.getServiceDescriptors(currentAtom) != null) {
-//                    this.outfile.print("," + this.twoDecimalFormat.format(MoleculeKU.SMARTCYP_PROPERTY.Dist2CarboxylicAcid.getServiceDescriptors(currentAtom)));
-//                } else {
-//                    this.outfile.print(",0");
-//                }
-//
-//                if (MoleculeKU.SMARTCYP_PROPERTY.SASA2D.getServiceDescriptors(currentAtom) != null) {
-//                    this.outfile.print("," + this.twoDecimalFormat.format(MoleculeKU.SMARTCYP_PROPERTY.SASA2D.getServiceDescriptors(currentAtom)));
-//                } else {
-//                    this.outfile.print(",0");
-//                }
-
             }
+        }
+
+        String flag = "V1";
+        if (this.format.equals("simple")) {
+            flag = "V2";
         }
 
         if (scoresGeneral.getScores().size() > 0) {
             scoresGeneral.filter(threshold, maxRank);
             scoresGeneral.sortByRank();
-            mol.setProperty(FIELD_NAME_GEN, scoresGeneral.asStringV1());
+            mol.setProperty(FIELD_NAME_GEN, scoresGeneral.asString(flag));
         }
         if (scores2D6.getScores().size() > 0) {
             scores2D6.filter(threshold, maxRank);
             scores2D6.sortByRank();
-            mol.setProperty(FIELD_NAME_2D6, scores2D6.asStringV1());
+            mol.setProperty(FIELD_NAME_2D6, scores2D6.asString(flag));
         }
         if (scores2C9.getScores().size() > 0) {
             scores2C9.filter(threshold, maxRank);
             scores2C9.sortByRank();
-            mol.setProperty(FIELD_NAME_2C9, scores2C9.asStringV1());
+            mol.setProperty(FIELD_NAME_2C9, scores2C9.asString(flag));
         }
     }
 

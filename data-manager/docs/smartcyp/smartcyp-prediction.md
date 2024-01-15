@@ -44,7 +44,8 @@ handled by other CDK based jobs (using a newer version of CDK) may not be handle
 * **Calculate 2C9 reactivity** - calculate the 2C9 reactivity
 * **Apply empirical N-Oxidation corrections** - apply empirical N-Oxidation corrections to calculations
 * **Maximum rank** - output only this number of predicted sites for each molecule
-* ** Score threshold** - don't output sites below this score
+* **Score threshold** - don't output sites below this score
+* **Score format** - output format for the scores (standard or simple)
 
 ## Output
 
@@ -53,3 +54,25 @@ The following properties are added to the output SD-file, if those predictions a
 * SMARTCyp_GEN - general P450 metabolism (e.g. 3A4)
 * SMARTCyp_2D6 - prediction for the 2D6 isoform
 * SMARTCyp_2C9 - prediction for the 2C9 isoform
+
+The scores are written according to the *format* option.
+The original format is called *standard* and writes values like this:
+```
+> <SMARTCyp_GEN>
+1 N.12=46.702797
+2 N.13=48.35204
+3 C.16=60.8
+```
+The first character is the rank, followed by a space, followed by `symbol.number=score` where symbol is the atom's 
+symbol and number is the atom's number (starting at zero).
+
+The *simple* format writes a simplified format that can be used for depiction with the
+[CDK Depict](https://github.com/InformaticsMatters/fragnet/blob/master/data-manager/docs/cdk-depict/cdk-depict-mols.md)
+job. The same data would look like this:
+```
+> <SMARTCyp_GEN>
+12 46.702797
+13 48.35204
+16 60.8
+```
+Only the atom number and score are written.

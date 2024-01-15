@@ -38,7 +38,34 @@ public class AtomScoreSet {
         }
     }
 
+    /** Score written as "1 N.12=46.702797"
+     * Rank-space-atomsymbol-atomnumber=score
+     *
+     * @return The formatted score
+     */
     public String asStringV1() {
         return scores.stream().map((s) -> s.toString()).collect(Collectors.joining("\n"));
     }
+
+    /** Score written as "12 46.702797"
+     * atomnumber-space-score
+     *
+     * @return The formatted score
+     */
+    public String asStringV2() {
+        return scores.stream().map((s) -> {
+            return s.getAtomIndex() + " " + s.getScore();
+        }).collect(Collectors.joining("\n"));
+    }
+
+    public String asString(String version) {
+        if (version.equals("V1")) {
+            return asStringV1();
+        } else if (version.equals("V2")) {
+            return asStringV2();
+        } else {
+            throw new IllegalArgumentException("Unsupported version: " + version);
+        }
+    }
+
 }
