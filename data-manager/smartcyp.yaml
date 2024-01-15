@@ -47,6 +47,7 @@ jobs:
         - empirical
         - maxRank
         - threshold
+        - format
       inputs:
         type: object
         required:
