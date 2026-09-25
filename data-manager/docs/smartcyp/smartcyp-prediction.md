@@ -59,20 +59,20 @@ The scores are written according to the *format* option.
 The original format is called *standard* and writes values like this:
 ```
 > <SMARTCyp_GEN>
-1 N.12=46.702797
-2 N.13=48.35204
+1 N.12=46.7
+2 N.13=48.4
 3 C.16=60.8
 ```
 The first character is the rank, followed by a space, followed by `symbol.number=score` where symbol is the atom's 
-symbol and number is the atom's number (starting at zero).
+symbol and number is the atom's number (starting at zero). Scores are written to one decimal place.
 
 The *simple* format writes a simplified format that can be used for depiction with the
 [CDK Depict](https://github.com/InformaticsMatters/fragnet/blob/master/data-manager/docs/cdk-depict/cdk-depict-mols.md)
 job. The same data would look like this:
 ```
 > <SMARTCyp_GEN>
-12 46.702797
-13 48.35204
+12 46.7
+13 48.4
 16 60.8
 ```
 Only the atom number and score are written.
