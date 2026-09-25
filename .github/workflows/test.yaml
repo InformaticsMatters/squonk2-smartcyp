@@ -1,0 +1,53 @@
+---
+name: test
+
+# A callable workflow to execute repository tests.
+#
+# This builds the image locally and runs the Job tests against it, rather than
+# validating the Job Definitions with '--dry-run' alone. Nothing is pushed, so
+# no registry credentials are needed and no per-branch tags accumulate on
+# Docker Hub.
+
+on:
+  workflow_call:
+
+env:
+  # Match the toolchain in app/build.gradle and the JRE in the Dockerfile.
+  JAVA_VERSION: '21'
+  # The tag the image is built with here, and the tag jote is told to use.
+  # It is never pushed.
+  CI_IMAGE_TAG: ci
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v7
+    - name: Set up JDK
+      uses: actions/setup-java@v6
+      with:
+        distribution: temurin
+        java-version: ${{ env.JAVA_VERSION }}
+    - name: Set up Gradle
+      uses: gradle/actions/setup-gradle@v6
+    - name: Yamllint
+      run: pipx run yamllint .
+    - name: Gradle test
+      run: ./gradlew test
+    - name: Set up Python
+      uses: actions/setup-python@v6
+      with:
+        python-version: '3.12'
+    - name: Install jote
+      # A floor, not a caret: a caret on a 0.x version stops at the next minor
+      # and silently holds jote back.
+      run: pip install --no-cache-dir 'im-jote>=0.14.0'
+    - name: Build the image under test
+      run: |
+        # Tagged with the image name the Job Definition uses, so that
+        # 'jote --image-tag' below resolves it from the local image store.
+        docker build -f Dockerfile . \
+          -t informaticsmatters/squonk2-smartcyp:${{ env.CI_IMAGE_TAG }}
+    - name: Jote
+      run: jote --image-tag ${{ env.CI_IMAGE_TAG }}

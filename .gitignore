@@ -3,4 +3,7 @@
 
 app/build
 
+# Gradle 9 writes its problems report to a build directory at the root too
+build
+
 .idea
