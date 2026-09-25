@@ -1,8 +1,10 @@
 ---
 name: publish-stable
 
-# Actions that take place on the 'main' branch (and nightly).
+# Actions that take place on the default branch (and nightly).
 # Here we build and push a 'stable' image.
+#
+# The default branch here is 'master', not 'main'.
 
 # -----------------
 # Control variables (GitHub Secrets)
@@ -23,9 +25,9 @@ name: publish-stable
 on:
   push:
     branches:
-    - main
+    - master
   schedule:
-  # Build the default branch (typically this branch, main) every day at 6:01am...
+  # Build the default branch (this branch, master) every day at 6:01am...
   - cron: '1 6 * * *'
 
 jobs:

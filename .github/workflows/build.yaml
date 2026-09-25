@@ -2,7 +2,9 @@
 name: build
 
 # Actions that take place on branches
-# or are driven by pull-requests to the main/master branch.
+# or are driven by pull-requests to the default branch.
+#
+# The default branch here is 'master', not 'main'.
 
 # -----------------
 # Control variables (GitHub Secrets)
@@ -19,7 +21,7 @@ name: build
 on:
   push:
     branches-ignore:
-    - main
+    - master
     - staging
     tags-ignore:
     - '**'
