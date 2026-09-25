@@ -1,0 +1,38 @@
+---
+name: publish-latest
+
+# Actions that take place on the 'staging' branch.
+# Here we build and push a 'latest' image.
+
+# -----------------
+# Control variables (GitHub Secrets)
+# -----------------
+#
+# At the GitHub 'organisation' or 'project' level you must have the following
+# GitHub 'Repository Secrets' defined (i.e. via 'Settings -> Secrets'): -
+#
+# DOCKERHUB_USERNAME
+# DOCKERHUB_TOKEN
+#
+# -----------
+# Environment (GitHub Environments)
+# -----------
+#
+# Environment         (n/a)
+
+on:
+  push:
+    branches:
+    - staging
+
+jobs:
+  call-test:
+    uses: ./.github/workflows/test.yaml
+
+  call-build-with-push:
+    needs: call-test
+    uses: ./.github/workflows/build-all-with-push-option.yaml
+    secrets: inherit
+    with:
+      image-tag: latest
+      image-push: true

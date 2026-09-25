@@ -1,8 +1,8 @@
 ---
-# Tools using the Chemistry Development Kit
+# Cytochrome P450 site-of-metabolism prediction using SMARTCyp
 kind: DataManagerJobDefinition
 kind-version: '2021.1'
-name: CDK jobs
+name: SMARTCyp jobs
 collection: smartcyp
 
 jobs:
@@ -17,6 +17,7 @@ jobs:
     - smartcyp
     - prediction
     - p450
+    doc-url: smartcyp/smartcyp-prediction.md
     image:
       name: informaticsmatters/squonk2-smartcyp
       tag: 'latest'
@@ -141,7 +142,7 @@ jobs:
           outputFile: foo/cyp-predictions.sdf
           calcGeneral: true
           calc2D6: true
-          calc2Cp: true
+          calc2C9: true
           empirical: true
           maxRank: 3
         checks:
@@ -157,7 +158,7 @@ jobs:
           outputFile: foo/cyp-predictions.sdf
           calcGeneral: true
           calc2D6: true
-          calc2Cp: true
+          calc2C9: true
           empirical: true
           maxRank: 3
         checks:
@@ -173,7 +174,7 @@ jobs:
           outputFile: foo/cyp-predictions.sdf
           calcGeneral: true
           calc2D6: true
-          calc2Cp: true
+          calc2C9: true
           empirical: true
           maxRank: 3
           format: simple

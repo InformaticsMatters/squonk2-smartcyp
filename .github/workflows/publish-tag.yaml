@@ -1,0 +1,50 @@
+---
+name: publish-tag
+
+# Actions that publish an immutable, statically-tagged image.
+#
+# Run this manually when cutting a release. The tag you give is the tag the
+# image is published with, and it must be one that has never been published
+# before - the Data Manager treats any tag other than 'latest' or 'stable' as
+# static and caches it per Kubernetes node, so a reused tag leaves some nodes
+# running the old content. See docs/versioning.md in the squonk2-jobs
+# umbrella repository.
+#
+# Give the same value to the Job Definition 'version' and 'image.tag' fields,
+# then cut the matching Git tag.
+
+# -----------------
+# Control variables (GitHub Secrets)
+# -----------------
+#
+# At the GitHub 'organisation' or 'project' level you must have the following
+# GitHub 'Repository Secrets' defined (i.e. via 'Settings -> Secrets'): -
+#
+# DOCKERHUB_USERNAME
+# DOCKERHUB_TOKEN
+#
+# -----------
+# Environment (GitHub Environments)
+# -----------
+#
+# Environment         (n/a)
+
+on:
+  workflow_dispatch:
+    inputs:
+      image-tag:
+        description: The immutable image tag to build and publish (e.g. 1.1.0)
+        type: string
+        required: true
+
+jobs:
+  call-test:
+    uses: ./.github/workflows/test.yaml
+
+  call-build-with-push:
+    needs: call-test
+    uses: ./.github/workflows/build-all-with-push-option.yaml
+    secrets: inherit
+    with:
+      image-tag: ${{ inputs.image-tag }}
+      image-push: true

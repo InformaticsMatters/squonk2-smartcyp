@@ -1,0 +1,8 @@
+# Only the Gradle build and the Java sources belong in the build context.
+.git
+.gradle
+.github
+app/build
+build
+data
+data-manager
