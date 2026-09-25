@@ -10,7 +10,7 @@ jobs:
     name: P450 predictions using SmartCyp
     description: >-
       Cytochrome P450 predictions using SmartCyp
-    version: '1.0.0'
+    version: '1.1.0'
     category: comp chem
     keywords:
     - cdk
@@ -20,12 +20,20 @@ jobs:
     doc-url: smartcyp/smartcyp-prediction.md
     image:
       name: informaticsmatters/squonk2-smartcyp
-      tag: 'latest'
+      # An immutable tag, not 'latest'. The Data Manager re-pulls 'latest' and
+      # 'stable' on every run and caches everything else per node, so a static
+      # tag is what makes a Job reproducible - and it must never be reused.
+      # Bump this and 'version' together. See docs/versioning.md in the
+      # squonk2-jobs umbrella repository.
+      tag: '1.1.0'
       project-directory: /data
       working-directory: /data
       fix-permissions: true
-    # The container has no entrypoint so this is the command that is executed.
-    # The CLASSPATH environment variable in the container is set.
+    # This whole command is what the container runs. The image sets no
+    # ENTRYPOINT of its own and relies on the CLASSPATH environment variable,
+    # so 'java <class>' resolves. (The eclipse-temurin base does set an
+    # ENTRYPOINT, a cacert helper that execs its arguments; Kubernetes replaces
+    # it outright when the Data Manager supplies a command.)
     command: >-
       java squonk.jobs.smartcyp.Predictor
       --input '{{ inputFile }}'
